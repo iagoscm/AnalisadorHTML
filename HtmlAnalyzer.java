@@ -19,6 +19,10 @@ public class HtmlAnalyzer {
 
         try {
             String htmlContent = fetchHtml(args[0]);
+
+            htmlContent = htmlContent.replaceAll("(?i)<!doctype html>\\s*", "");
+            htmlContent = htmlContent.replaceAll("<(\\w+)\\s+[^>]*>", "<$1>");
+            
             parseHtml(htmlContent);
         } catch (IOException | URISyntaxException e) {
             System.out.println("URL connection error");
@@ -33,7 +37,7 @@ public class HtmlAnalyzer {
         URL url = uri.toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
-        connection.setInstanceFollowRedirects(true);  // Seguir redirecionamentos
+        connection.setInstanceFollowRedirects(true); 
 
         if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
             throw new IOException("HTTP error: " + connection.getResponseCode());
@@ -56,15 +60,17 @@ public class HtmlAnalyzer {
         int maxDepth = -1;
         String deepestText = null;
 
-        Pattern pattern = Pattern.compile("<(/)?(\\w+)(\\s.*?)?>|([^<]+)");
+        Pattern pattern = Pattern.compile("<(/)?\\s*([a-zA-Z]+)(\\s+[^>]*)?>|([^<]+)");
         Matcher matcher = pattern.matcher(htmlContent);
 
         while (matcher.find() && !malformed) {
-            if (matcher.group(4) != null) {  
-                String text = matcher.group(4).trim();
-                if (!text.isEmpty() && stack.size() > maxDepth) {
-                    maxDepth = stack.size();
-                    deepestText = text;
+            if (matcher.group(4) != null) {
+                if (htmlTagFound && !stack.isEmpty()) {
+                    String text = matcher.group(4).trim();
+                    if (!text.isEmpty() && stack.size() > maxDepth) {
+                        maxDepth = stack.size();
+                        deepestText = text;
+                    }
                 }
                 continue;
             }
