@@ -43,8 +43,8 @@ java HtmlAnalyzer <url>
 
 Caso queira compilar os testes e executá-los, executar os comandos:
 ``` shell
-javac HtmlAnalyzer.java TestHtmlPilha.java
-java TestHtmlPilha
+javac HtmlAnalyzer.java TestHtml.java
+java TestHtml
 ```
 
 ### Easter Egg
