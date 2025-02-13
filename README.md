@@ -2,7 +2,7 @@ EASTER_EGG_URLS
 
 # Java HTMLAnalyzer
 
-Este programa em java é capaz de a partir de uma URL, obter o trecho de texto contido no nível mais profundo da estrutura HTML de seu conteúdo. A ideia é implementar uma solução seguindo um autômato de pilha, que retorne esse nível mais profundo.
+Este programa em java é capaz de a partir de uma URL, obter o trecho de texto contido no nível mais profundo da estrutura HTML de seu conteúdo. A ideia é implementar uma solução simulando um autômato de pilha, que retorne esse nível mais profundo, e printa ou o titulo, ou se a HTML não está bem formada. Caso não seja possível de se conectar, retorna um erro de conexão.
 
 Exemplo: 
 
@@ -39,6 +39,12 @@ Após compilar o programa, para utilizar basta executar o comando:
 
 ``` shell
 java HtmlAnalyzer <url>
+```
+
+Caso queira compilar os testes e executá-los, executar os comandos:
+``` shell
+javac HtmlAnalyzer.java TestHtmlPilha.java
+java TestHtmlPilha
 ```
 
 ### Easter Egg
