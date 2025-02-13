@@ -2,7 +2,7 @@ EASTER_EGG_URLS
 
 # Java HTMLAnalyzer
 
-Este programa em java é capaz de a partir de uma URL, obter o trecho de texto contido no nível mais profundo da estrutura HTML de seu conteúdo. A ideia é implementar uma solução simulando um autômato de pilha, que retorne esse nível mais profundo, e printa ou o titulo, ou se a HTML não está bem formada. Caso não seja possível de se conectar, retorna um erro de conexão.
+Este programa em java é capaz de a partir de uma URL, obter o trecho de texto contido no nível mais profundo da estrutura HTML de seu conteúdo. A ideia é implementar uma solução simulando um autômato de pilha, que retorne esse nível mais profundo, e printa ou o titulo, ou se a HTML não está bem formada. Caso não seja possível de se conectar, retorna um erro de conexão. Esse código vê o código fonte da página com seu HTML puro, sem compilação de frameworks ou terceiros, ou seja, antes do live DOM. Também possui verificação e correção para entrada e url sem http ou https.
 
 Exemplo: 
 

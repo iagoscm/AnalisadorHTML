@@ -6,6 +6,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HtmlAnalyzer {
 
@@ -24,10 +26,14 @@ public class HtmlAnalyzer {
     }
 
     private static String fetchHtml(String urlString) throws IOException, URISyntaxException {
+        if (!urlString.startsWith("http://") && !urlString.startsWith("https://")) {
+            urlString = "http://" + urlString;
+        }
         URI uri = new URI(urlString);
         URL url = uri.toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
+        connection.setInstanceFollowRedirects(true);  // Seguir redirecionamentos
 
         if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
             throw new IOException("HTTP error: " + connection.getResponseCode());
@@ -46,94 +52,57 @@ public class HtmlAnalyzer {
     static void parseHtml(String htmlContent) {
         Stack<String> stack = new Stack<>();
         boolean malformed = false;
-        boolean firstTagFound = false;
-        boolean htmlClosed = false;
+        boolean htmlTagFound = false;
         int maxDepth = -1;
         String deepestText = null;
 
-        for (String line : htmlContent.split("\n")) {
-            line = line.trim();
-            if (line.isEmpty()) continue;
+        Pattern pattern = Pattern.compile("<(/)?(\\w+)(\\s.*?)?>|([^<]+)");
+        Matcher matcher = pattern.matcher(htmlContent);
 
-            // Se já fechou a tag <html>, qualquer conteúdo extra é inválido.
-            if (htmlClosed) {
-                malformed = true;
-                break;
-            }
-
-            if (!firstTagFound) {
-                // A primeira linha não vazia deve ser a tag de abertura <html>
-                if (!isOpeningTag(line) || !"html".equals(getTagName(line))) {
-                    malformed = true;
-                    break;
+        while (matcher.find() && !malformed) {
+            if (matcher.group(4) != null) {  
+                String text = matcher.group(4).trim();
+                if (!text.isEmpty() && stack.size() > maxDepth) {
+                    maxDepth = stack.size();
+                    deepestText = text;
                 }
-                stack.push("html");
-                firstTagFound = true;
                 continue;
             }
 
-            if (isTag(line)) {
-                if (isClosingTag(line)) {
-                    if (stack.isEmpty()) {
-                        malformed = true;
-                        break;
-                    }
-                    String tag = getTagName(line);
-                    String expectedTag = stack.pop();
-                    if (tag == null || !tag.equals(expectedTag)) {
-                        malformed = true;
-                        break;
-                    }
-                    if (stack.isEmpty() && "html".equals(tag)) {
-                        htmlClosed = true;
-                    }
-                } else { // tag de abertura
-                    String tag = getTagName(line);
-                    if (tag == null || !isValidTag(tag)) {
-                        malformed = true;
-                        break;
-                    }
-                    stack.push(tag);
+            String tagName = matcher.group(2).toLowerCase();
+            boolean isClosing = matcher.group(1) != null;
+
+            if (tagName.startsWith("!") || isSelfClosing(tagName)) {
+                continue;
+            }
+
+            if (!htmlTagFound) {
+                if (!isClosing && "html".equals(tagName)) {
+                    htmlTagFound = true;
+                    stack.push(tagName);
+                } else {
+                    malformed = true; 
+                }
+                continue;
+            }
+
+            if (isClosing) {
+                if (stack.isEmpty() || !stack.pop().equals(tagName)) {
+                    malformed = true;
                 }
             } else {
-                // Linha de texto: atualiza o texto mais profundo, considerando o tamanho da pilha.
-                int depth = stack.size();
-                if (depth > maxDepth) {
-                    maxDepth = depth;
-                    deepestText = line;
-                }
+                stack.push(tagName);
             }
         }
 
-        if (malformed || !htmlClosed || !stack.isEmpty()) {
-            System.out.println("malformed HTML");
-        } else {
+        if (!malformed && stack.isEmpty() && htmlTagFound) {
             System.out.println(deepestText != null ? deepestText : "");
+        } else {
+            System.out.println("malformed HTML");
         }
     }
 
-    private static boolean isTag(String line) {
-        return line.startsWith("<") && line.endsWith(">");
-    }
-
-    private static boolean isOpeningTag(String line) {
-        return isTag(line) && !line.startsWith("</");
-    }
-
-    private static boolean isClosingTag(String line) {
-        return isTag(line) && line.startsWith("</");
-    }
-
-    private static String getTagName(String line) {
-        try {
-            String tagContent = line.substring(line.startsWith("</") ? 2 : 1, line.length() - 1).trim();
-            return isValidTag(tagContent) ? tagContent : null;
-        } catch (IndexOutOfBoundsException e) {
-            return null;
-        }
-    }
-
-    private static boolean isValidTag(String tag) {
-        return tag.matches("^[A-Za-z]+$");
+    private static boolean isSelfClosing(String tagName) {
+        return tagName.matches("img|br|meta|link|hr|input|area|base|col|command|embed|keygen|param|source|track|wbr");
     }
 }
